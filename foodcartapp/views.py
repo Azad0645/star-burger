@@ -1,8 +1,9 @@
-import json
 from django.http import JsonResponse
 from django.templatetags.static import static
-from django.db import transaction
-from .models import Product, Order, OrderItem
+from .models import Product
+from rest_framework import generics, status
+from rest_framework.response import Response
+from .serializers import OrderCreateSerializer
 
 
 def banners_list_api(request):
@@ -57,37 +58,15 @@ def product_list_api(request):
     })
 
 
-def register_order(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Некорректный JSON"}, status=400)
+class OrderCreateView(generics.CreateAPIView):
+    serializer_class = OrderCreateSerializer
 
-        try:
-            with transaction.atomic():
-                order = Order.objects.create(
-                    firstname=data['firstname'],
-                    lastname=data['lastname'],
-                    phonenumber=data['phonenumber'],
-                    address=data['address']
-                )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
 
-                for item in data['products']:
-                    product = Product.objects.get(id=item['product'])
-                    OrderItem.objects.create(
-                        order=order,
-                        product=product,
-                        quantity=item['quantity']
-                    )
-
-        except KeyError as e:
-            return JsonResponse({"error": f"Отсутствует обязательное поле: {e}"}, status=400)
-        except Product.DoesNotExist:
-            return JsonResponse({"error": "Указан несуществующий товар"}, status=404)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
-        return JsonResponse({"status": "ok", "order_id": order.id})
-
-    return JsonResponse({"error": "Разрешён только POST-запрос"}, status=405)
+        return Response(
+            {"status": "ok", "order_id": order.id},
+            status=status.HTTP_201_CREATED
+        )
