@@ -1,8 +1,8 @@
+import json
 from django.http import JsonResponse
 from django.templatetags.static import static
-
-
-from .models import Product
+from django.db import transaction
+from .models import Product, Order, OrderItem
 
 
 def banners_list_api(request):
@@ -58,5 +58,36 @@ def product_list_api(request):
 
 
 def register_order(request):
-    # TODO это лишь заглушка
-    return JsonResponse({})
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Некорректный JSON"}, status=400)
+
+        try:
+            with transaction.atomic():
+                order = Order.objects.create(
+                    firstname=data['firstname'],
+                    lastname=data['lastname'],
+                    phonenumber=data['phonenumber'],
+                    address=data['address']
+                )
+
+                for item in data['products']:
+                    product = Product.objects.get(id=item['product'])
+                    OrderItem.objects.create(
+                        order=order,
+                        product=product,
+                        quantity=item['quantity']
+                    )
+
+        except KeyError as e:
+            return JsonResponse({"error": f"Отсутствует обязательное поле: {e}"}, status=400)
+        except Product.DoesNotExist:
+            return JsonResponse({"error": "Указан несуществующий товар"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+        return JsonResponse({"status": "ok", "order_id": order.id})
+
+    return JsonResponse({"error": "Разрешён только POST-запрос"}, status=405)

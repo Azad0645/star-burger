@@ -3,10 +3,7 @@ from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 
-from .models import Product
-from .models import ProductCategory
-from .models import Restaurant
-from .models import RestaurantMenuItem
+from .models import Product, ProductCategory, Restaurant, RestaurantMenuItem, Order, OrderItem
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -46,8 +43,6 @@ class ProductAdmin(admin.ModelAdmin):
         'category',
     ]
     search_fields = [
-        # FIXME SQLite can not convert letter case for cyrillic words properly, so search will be buggy.
-        # Migration to PostgreSQL is necessary
         'name',
         'category__name',
     ]
@@ -102,5 +97,27 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductCategory)
-class ProductAdmin(admin.ModelAdmin):
-    pass
+class ProductCategoryAdmin(admin.ModelAdmin):
+    search_fields = ['name']
+
+
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    autocomplete_fields = ['product']
+    readonly_fields = []
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'firstname', 'lastname', 'phonenumber', 'address']
+    search_fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address']
+    inlines = [OrderItemInline]
+    ordering = ['-id']
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ['id', 'order', 'product', 'quantity']
+    list_select_related = ['order', 'product']
+    search_fields = ['order__id', 'product__name']
