@@ -3,11 +3,13 @@ from django.db import transaction
 from phonenumber_field.serializerfields import PhoneNumberField
 from .models import Order, OrderItem, Product
 
+
 class OrderItemCreateSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all()
     )
     quantity = serializers.IntegerField(min_value=1)
+
 
 class OrderCreateSerializer(serializers.Serializer):
     firstname = serializers.CharField(max_length=50, allow_blank=False, trim_whitespace=True)
@@ -25,3 +27,19 @@ class OrderCreateSerializer(serializers.Serializer):
             for item in items_data
         ])
         return order
+
+
+class OrderItemReadSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ('id', 'product', 'product_name', 'quantity')
+
+
+class OrderReadSerializer(serializers.ModelSerializer):
+    items = OrderItemReadSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ('id', 'firstname', 'lastname', 'phonenumber', 'address', 'items')

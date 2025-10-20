@@ -3,7 +3,7 @@ from django.templatetags.static import static
 from .models import Product
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .serializers import OrderCreateSerializer
+from .serializers import OrderCreateSerializer, OrderReadSerializer
 
 
 def banners_list_api(request):
@@ -66,7 +66,5 @@ class OrderCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
 
-        return Response(
-            {"status": "ok", "order_id": order.id},
-            status=status.HTTP_201_CREATED
-        )
+        read_serializer = OrderReadSerializer(order)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
