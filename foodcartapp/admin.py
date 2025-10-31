@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.shortcuts import reverse
 from django.templatetags.static import static
@@ -101,11 +102,21 @@ class ProductCategoryAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
 
+class OrderItemInlineForm(forms.ModelForm):
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity', 'price_snapshot']
+        widgets = {
+            'price_snapshot': forms.NumberInput(attrs={'min': '0', 'step': '0.01'})
+        }
+
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
+    form = OrderItemInlineForm
     extra = 0
     autocomplete_fields = ['product']
-    readonly_fields = []
+    fields = ['product', 'quantity', 'price_snapshot']
 
 
 @admin.register(Order)
@@ -118,6 +129,6 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ['id', 'order', 'product', 'quantity']
+    list_display = ['id', 'order', 'product', 'quantity', 'price_snapshot']
     list_select_related = ['order', 'product']
     search_fields = ['order__id', 'product__name']

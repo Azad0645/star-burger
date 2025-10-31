@@ -129,7 +129,7 @@ class RestaurantMenuItem(models.Model):
 class OrderQuerySet(models.QuerySet):
     def with_total_price(self):
         total_expr = Sum(
-            F('items__quantity') * F('items__product__price'),
+            F('items__quantity') * F('items__price_snapshot'),
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
         return self.annotate(
@@ -203,6 +203,13 @@ class OrderItem(models.Model):
         blank=False,
         null=False,
         validators=[MinValueValidator(1)]
+    )
+
+    price_snapshot = models.DecimalField(
+        'Цена в заказе',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
     )
 
     class Meta:
