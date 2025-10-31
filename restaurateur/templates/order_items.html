@@ -23,7 +23,11 @@
 
     {% for item in order_items %}
       <tr>
-        <td>{{ item.id }}</td>
+        <td>
+            <a href="{% url 'admin:foodcartapp_order_change' item.id %}?next={{ request.path|urlencode }}">
+              {{ item.id }}
+            </a>
+        </td>
         <td>{{ item.firstname }} {{ item.lastname }}</td>
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
