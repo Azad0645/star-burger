@@ -106,5 +106,6 @@ def view_orders(request):
         )
         .order_by('-id')
         .prefetch_related('items__product')
+        .exclude(status='COMPLETED')
     )
     return render(request, 'order_items.html', {'order_items': orders})

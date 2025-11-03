@@ -17,6 +17,7 @@
       <th>Клиент</th>
       <th>Телефон</th>
       <th>Адрес доставки</th>
+      <th>Статус</th>
       <th class="text-end">Позиций</th>
       <th class="text-end">Сумма</th>
     </tr>
@@ -31,6 +32,7 @@
         <td>{{ item.firstname }} {{ item.lastname }}</td>
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
+        <td>{{ item.get_status_display }}</td>
         <td class="text-end">{{ item.items_count }}</td>
         <td class="text-end">{{ item.total_price }}</td>
       </tr>

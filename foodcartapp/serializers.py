@@ -17,6 +17,7 @@ class OrderCreateSerializer(serializers.Serializer):
     phonenumber = PhoneNumberField()
     address = serializers.CharField(max_length=200, allow_blank=False, trim_whitespace=True)
     products = OrderItemCreateSerializer(many=True, allow_empty=False)
+    status = serializers.CharField(read_only=True)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -45,7 +46,8 @@ class OrderItemReadSerializer(serializers.ModelSerializer):
 
 class OrderReadSerializer(serializers.ModelSerializer):
     items = OrderItemReadSerializer(many=True, read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Order
-        fields = ('id', 'firstname', 'lastname', 'phonenumber', 'address', 'items')
+        fields = ('id', 'firstname', 'lastname', 'phonenumber', 'address', 'items', 'status', 'status_display')
