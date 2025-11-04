@@ -18,6 +18,7 @@
       <th>Телефон</th>
       <th>Адрес доставки</th>
       <th>Статус</th>
+      <th>Комментарий</th>
       <th class="text-end">Позиций</th>
       <th class="text-end">Сумма</th>
     </tr>
@@ -33,12 +34,13 @@
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
         <td>{{ item.get_status_display }}</td>
+        <td>{{ item.comment|default:"—" }}</td>
         <td class="text-end">{{ item.items_count }}</td>
         <td class="text-end">{{ item.total_price }}</td>
       </tr>
     {% empty %}
       <tr>
-        <td colspan="6">Нет заказов</td>
+        <td colspan="8">Нет заказов</td>
       </tr>
     {% endfor %}
    </table>
