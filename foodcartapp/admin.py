@@ -122,12 +122,13 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment']
-    list_filter = ['status']
+    list_display = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at']
+    list_filter = ['status', 'created_at']
     search_fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'comment']
     inlines = [OrderItemInline]
     ordering = ['-id']
-    fields = ['firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment']
+    fields = ['firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at']
+    readonly_fields = ['created_at']
 
     def response_change(self, request, obj):
         next_url = request.GET.get('next')

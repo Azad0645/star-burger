@@ -189,6 +189,23 @@ class Order(models.Model):
         null=False,
         default=''
     )
+    created_at = models.DateTimeField(
+        verbose_name='Дата создания',
+        auto_now_add=True,
+        db_index=True
+    )
+    called_at = models.DateTimeField(
+        verbose_name='Дата звонка',
+        null=True,
+        blank=True,
+        db_index=True
+    )
+    delivered_at = models.DateTimeField(
+        verbose_name='Дата доставки',
+        null=True,
+        blank=True,
+        db_index=True
+    )
 
     objects = OrderQuerySet.as_manager()
 
