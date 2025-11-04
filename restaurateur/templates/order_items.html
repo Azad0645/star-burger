@@ -19,6 +19,7 @@
       <th>Адрес доставки</th>
       <th>Статус</th>
       <th>Комментарий</th>
+      <th>Оплата</th>
       <th class="text-end">Позиций</th>
       <th class="text-end">Сумма</th>
     </tr>
@@ -35,6 +36,7 @@
         <td>{{ item.address }}</td>
         <td>{{ item.get_status_display }}</td>
         <td>{{ item.comment|default:"—" }}</td>
+        <td>{{ item.get_payment_method_display }}</td>
         <td class="text-end">{{ item.items_count }}</td>
         <td class="text-end">{{ item.total_price }}</td>
       </tr>

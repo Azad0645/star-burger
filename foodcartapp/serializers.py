@@ -18,6 +18,7 @@ class OrderCreateSerializer(serializers.Serializer):
     address = serializers.CharField(max_length=200, allow_blank=False, trim_whitespace=True)
     products = OrderItemCreateSerializer(many=True, allow_empty=False)
     status = serializers.CharField(read_only=True)
+    payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, default='CASH')
 
     @transaction.atomic
     def create(self, validated_data):
@@ -47,7 +48,8 @@ class OrderItemReadSerializer(serializers.ModelSerializer):
 class OrderReadSerializer(serializers.ModelSerializer):
     items = OrderItemReadSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
 
     class Meta:
         model = Order
-        fields = ('id', 'firstname', 'lastname', 'phonenumber', 'address', 'items', 'status', 'status_display')
+        fields = ('id', 'firstname', 'lastname', 'phonenumber', 'address', 'items', 'status', 'status_display', 'payment_method', 'payment_method_display')
