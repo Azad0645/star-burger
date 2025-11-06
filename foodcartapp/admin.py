@@ -122,13 +122,18 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at', 'payment_method']
-    list_filter = ['status', 'created_at', 'payment_method']
+    list_display = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at', 'payment_method', 'cooking_restaurant']
+    list_filter = ['status', 'created_at', 'payment_method', 'cooking_restaurant']
     search_fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'comment']
     inlines = [OrderItemInline]
     ordering = ['-id']
-    fields = ['firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at', 'payment_method']
+    fields = ['firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at', 'payment_method', 'cooking_restaurant']
     readonly_fields = ['created_at']
+
+    def save_model(self, request, obj, form, change):
+        if obj.cooking_restaurant and obj.status == 'NEW':
+            obj.status = 'COOKING'
+        super().save_model(request, obj, form, change)
 
     def response_change(self, request, obj):
         next_url = request.GET.get('next')

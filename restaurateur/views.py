@@ -4,6 +4,7 @@ from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Sum, IntegerField, Value
+from django.db.models import Case, When
 from django.db.models.functions import Coalesce
 
 from django.contrib.auth import authenticate, login
@@ -94,6 +95,15 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    status_order = Case(
+        When(status='NEW', then=Value(0)),
+        When(status='COOKING', then=Value(1)),
+        When(status='DELIVERING', then=Value(2)),
+        When(status='COMPLETED', then=Value(3)),
+        default=Value(4),
+        output_field=IntegerField(),
+    )
+
     orders = (
         Order.objects
         .with_total_price()
@@ -102,9 +112,11 @@ def view_orders(request):
                 Sum('items__quantity'),
                 Value(0),
                 output_field=IntegerField(),
-            )
+            ),
+            status_priority=status_order,
         )
-        .order_by('-id')
+        .order_by('status_priority', '-id')
+        .select_related('cooking_restaurant')
         .prefetch_related('items__product')
         .exclude(status='COMPLETED')
     )

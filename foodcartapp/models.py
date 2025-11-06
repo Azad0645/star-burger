@@ -217,6 +217,14 @@ class Order(models.Model):
         default='CASH',
         db_index=True
     )
+    cooking_restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='Ресторан-исполнитель',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='orders',
+    )
 
     objects = OrderQuerySet.as_manager()
 
@@ -227,6 +235,29 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ {self.id} ({self.firstname} {self.lastname})'
+
+    def available_restaurants(self):
+        product_ids = set(self.items.values_list('product_id', flat=True))
+        if not product_ids:
+            return []
+
+        menu_items = (
+            RestaurantMenuItem.objects
+            .filter(availability=True, product_id__in=product_ids)
+            .select_related('restaurant')
+        )
+
+        restaurants = {}
+        for menu_item in menu_items:
+            restaurants.setdefault(menu_item.restaurant, set()).add(menu_item.product_id)
+
+        suitable_restaurants = [
+            restaurant
+            for restaurant, products in restaurants.items()
+            if products == product_ids
+        ]
+
+        return suitable_restaurants
 
 
 class OrderItem(models.Model):
