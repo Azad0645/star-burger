@@ -45,8 +45,12 @@
           {% else %}
             <details>
               <summary>Доступные рестораны</summary>
-              {% for restaurant in item.available_restaurants %}
-                {{ restaurant.name }}{% if not forloop.last %}, {% endif %}
+              {% for info in item.available_restaurants_with_distance %}
+                {{ info.restaurant.name }}
+                {% if info.distance_km is not None %}
+                  — {{ info.distance_km }} км
+                {% endif %}
+                {% if not forloop.last %}<br>{% endif %}
               {% empty %}
                 Нет доступных ресторанов
               {% endfor %}

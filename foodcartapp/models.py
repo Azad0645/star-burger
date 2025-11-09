@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import Sum, F, DecimalField, Value
 from django.db.models.functions import Coalesce
+from geopy.distance import geodesic
+from geo.utils import fetch_coordinates
 
 
 class Restaurant(models.Model):
@@ -19,6 +21,18 @@ class Restaurant(models.Model):
         'контактный телефон',
         max_length=50,
         blank=True,
+    )
+    lat = models.FloatField(
+        'Широта',
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    lng = models.FloatField(
+        'Долгота',
+        null=True,
+        blank=True,
+        db_index=True,
     )
 
     class Meta:
@@ -225,6 +239,18 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         related_name='orders',
     )
+    lat = models.FloatField(
+        'Широта доставки',
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    lng = models.FloatField(
+        'Долгота доставки',
+        null=True,
+        blank=True,
+        db_index=True,
+    )
 
     objects = OrderQuerySet.as_manager()
 
@@ -258,6 +284,45 @@ class Order(models.Model):
         ]
 
         return suitable_restaurants
+
+    def available_restaurants_with_distance(self):
+        restaurants = self.available_restaurants()
+
+        if self.lat is None or self.lng is None:
+            return [
+                {'restaurant': r, 'distance_km': None}
+                for r in restaurants
+            ]
+
+        order_point = (self.lat, self.lng)
+        result = []
+
+        for restaurant in restaurants:
+            if restaurant.lat is not None and restaurant.lng is not None:
+                rest_point = (restaurant.lat, restaurant.lng)
+                distance_km = geodesic(order_point, rest_point).km
+                result.append({
+                    'restaurant': restaurant,
+                    'distance_km': round(distance_km, 2),
+                })
+
+        result.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
+
+        return result
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old = Order.objects.filter(pk=self.pk).first()
+            if old and old.address != self.address:
+                coords = fetch_coordinates(self.address)
+                if coords:
+                    self.lat, self.lng = coords
+        else:
+            coords = fetch_coordinates(self.address)
+            if coords:
+                self.lat, self.lng = coords
+
+        super().save(*args, **kwargs)
 
 
 class OrderItem(models.Model):
