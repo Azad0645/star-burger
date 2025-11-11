@@ -4,7 +4,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import Sum, F, DecimalField, Value
 from django.db.models.functions import Coalesce
 from geopy.distance import geodesic
-from geo.utils import fetch_coordinates
 from geo.models import GeocodedAddress
 
 
@@ -303,20 +302,6 @@ class Order(models.Model):
         result.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
 
         return result
-
-    def save(self, *args, **kwargs):
-        if self.pk:
-            old = Order.objects.filter(pk=self.pk).first()
-            if old and old.address != self.address:
-                geo = fetch_coordinates(self.address)
-                if geo:
-                    self.location = geo
-        else:
-            geo = fetch_coordinates(self.address)
-            if geo:
-                self.location = geo
-
-        super().save(*args, **kwargs)
 
 
 class OrderItem(models.Model):
