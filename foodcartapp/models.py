@@ -5,6 +5,7 @@ from django.db.models import Sum, F, DecimalField, Value
 from django.db.models.functions import Coalesce
 from geopy.distance import geodesic
 from geo.utils import fetch_coordinates
+from geo.models import GeocodedAddress
 
 
 class Restaurant(models.Model):
@@ -22,17 +23,13 @@ class Restaurant(models.Model):
         max_length=50,
         blank=True,
     )
-    lat = models.FloatField(
-        'Широта',
+    location = models.ForeignKey(
+        GeocodedAddress,
+        verbose_name='Координаты',
         null=True,
         blank=True,
-        db_index=True,
-    )
-    lng = models.FloatField(
-        'Долгота',
-        null=True,
-        blank=True,
-        db_index=True,
+        on_delete=models.SET_NULL,
+        related_name='restaurants',
     )
 
     class Meta:
@@ -239,17 +236,13 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         related_name='orders',
     )
-    lat = models.FloatField(
-        'Широта доставки',
+    location = models.ForeignKey(
+        GeocodedAddress,
+        verbose_name='Координаты доставки',
         null=True,
         blank=True,
-        db_index=True,
-    )
-    lng = models.FloatField(
-        'Долгота доставки',
-        null=True,
-        blank=True,
-        db_index=True,
+        on_delete=models.SET_NULL,
+        related_name='orders',
     )
 
     objects = OrderQuerySet.as_manager()
@@ -288,18 +281,19 @@ class Order(models.Model):
     def available_restaurants_with_distance(self):
         restaurants = self.available_restaurants()
 
-        if self.lat is None or self.lng is None:
+        if not self.location or self.location.lat is None or self.location.lng is None:
             return [
                 {'restaurant': r, 'distance_km': None}
                 for r in restaurants
             ]
 
-        order_point = (self.lat, self.lng)
+        order_point = (self.location.lat, self.location.lng)
         result = []
 
         for restaurant in restaurants:
-            if restaurant.lat is not None and restaurant.lng is not None:
-                rest_point = (restaurant.lat, restaurant.lng)
+            loc = getattr(restaurant, 'location', None)
+            if loc and loc.lat is not None and loc.lng is not None:
+                rest_point = (loc.lat, loc.lng)
                 distance_km = geodesic(order_point, rest_point).km
                 result.append({
                     'restaurant': restaurant,
@@ -314,13 +308,13 @@ class Order(models.Model):
         if self.pk:
             old = Order.objects.filter(pk=self.pk).first()
             if old and old.address != self.address:
-                coords = fetch_coordinates(self.address)
-                if coords:
-                    self.lat, self.lng = coords
+                geo = fetch_coordinates(self.address)
+                if geo:
+                    self.location = geo
         else:
-            coords = fetch_coordinates(self.address)
-            if coords:
-                self.lat, self.lng = coords
+            geo = fetch_coordinates(self.address)
+            if geo:
+                self.location = geo
 
         super().save(*args, **kwargs)
 
