@@ -158,3 +158,4 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['id', 'order', 'product', 'quantity', 'price_snapshot']
     list_select_related = ['order', 'product']
     search_fields = ['order__id', 'product__name']
+    raw_id_fields = ['order', 'product']
