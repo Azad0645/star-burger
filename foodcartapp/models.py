@@ -154,6 +154,7 @@ class OrderQuerySet(models.QuerySet):
 
 class Order(models.Model):
     STATUS_CHOICES = [
+        ("UNPROCESSED", "Необработан"),
         ('NEW', 'Принят'),
         ('COOKING', 'Готовится'),
         ('DELIVERING', 'Доставляется'),
@@ -195,7 +196,7 @@ class Order(models.Model):
         verbose_name='Статус',
         max_length=20,
         choices=STATUS_CHOICES,
-        default='NEW',
+        default='UNPROCESSED',
         db_index=True
     )
     comment = models.TextField(
@@ -225,7 +226,6 @@ class Order(models.Model):
         verbose_name='Способ оплаты',
         max_length=20,
         choices=PAYMENT_METHOD_CHOICES,
-        default='CASH',
         db_index=True
     )
     cooking_restaurant = models.ForeignKey(

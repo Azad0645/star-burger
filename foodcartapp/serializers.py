@@ -18,7 +18,6 @@ class OrderCreateSerializer(serializers.Serializer):
     address = serializers.CharField(max_length=200, allow_blank=False, trim_whitespace=True)
     products = OrderItemCreateSerializer(many=True, allow_empty=False)
     status = serializers.CharField(read_only=True)
-    payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, default='CASH')
 
     @transaction.atomic
     def create(self, validated_data):

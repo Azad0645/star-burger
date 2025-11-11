@@ -96,11 +96,12 @@ def view_restaurants(request):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     status_order = Case(
-        When(status='NEW', then=Value(0)),
-        When(status='COOKING', then=Value(1)),
-        When(status='DELIVERING', then=Value(2)),
-        When(status='COMPLETED', then=Value(3)),
-        default=Value(4),
+        When(status='UNPROCESSED', then=Value(0)),
+        When(status='NEW', then=Value(1)),
+        When(status='COOKING', then=Value(2)),
+        When(status='DELIVERING', then=Value(3)),
+        When(status='COMPLETED', then=Value(4)),
+        default=Value(5),
         output_field=IntegerField(),
     )
 
@@ -116,7 +117,7 @@ def view_orders(request):
             status_priority=status_order,
         )
         .order_by('status_priority', '-id')
-        .select_related('cooking_restaurant')
+        .select_related('cooking_restaurant', 'location')
         .prefetch_related('items__product')
         .exclude(status='COMPLETED')
     )
