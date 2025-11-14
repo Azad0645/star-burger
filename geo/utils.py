@@ -45,9 +45,9 @@ def fetch_coordinates(address: str):
         print(f"Яндекс вернул статус {response.status_code} для '{address}': {response.text[:200]}")
         return cached
 
-    data = response.json()
+    response_data = response.json()
     try:
-        members = data["response"]["GeoObjectCollection"]["featureMember"]
+        members = response_data["response"]["GeoObjectCollection"]["featureMember"]
         if not members:
             print(f"Яндекс не нашёл объект для '{address}'")
             return cached
