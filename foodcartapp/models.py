@@ -3,8 +3,8 @@ from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import Sum, F, DecimalField, Value
 from django.db.models.functions import Coalesce
-from geopy.distance import geodesic
 from geo.models import GeocodedAddress
+from collections import defaultdict
 
 
 class Restaurant(models.Model):
@@ -150,6 +150,42 @@ class OrderQuerySet(models.QuerySet):
             )
         )
 
+    def with_available_restaurants(self):
+        qs = self.prefetch_related('items__product')
+        orders = list(qs)
+
+        product_ids = set()
+        for order in orders:
+            product_ids.update(order.items.values_list('product_id', flat=True))
+
+        if not product_ids:
+            for order in orders:
+                order.available_restaurants = []
+            return qs
+
+        menu_items = (
+            RestaurantMenuItem.objects
+            .filter(availability=True, product_id__in=product_ids)
+            .select_related("restaurant")
+        )
+
+        rests_with_products = defaultdict(set)
+        for item in menu_items:
+            rests_with_products[item.restaurant].add(item.product_id)
+
+        for order in orders:
+            order_products = set(order.items.values_list('product_id', flat=True))
+
+            available_restaurants = [
+                rest
+                for rest, rest_products in rests_with_products.items()
+                if order_products.issubset(rest_products)
+            ]
+
+            order.available_restaurants = available_restaurants
+
+        return qs
+
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -253,55 +289,6 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ {self.id} ({self.firstname} {self.lastname})'
-
-    def available_restaurants(self):
-        product_ids = set(self.items.values_list('product_id', flat=True))
-        if not product_ids:
-            return []
-
-        menu_items = (
-            RestaurantMenuItem.objects
-            .filter(availability=True, product_id__in=product_ids)
-            .select_related('restaurant')
-        )
-
-        restaurants = {}
-        for menu_item in menu_items:
-            restaurants.setdefault(menu_item.restaurant, set()).add(menu_item.product_id)
-
-        suitable_restaurants = [
-            restaurant
-            for restaurant, products in restaurants.items()
-            if products == product_ids
-        ]
-
-        return suitable_restaurants
-
-    def available_restaurants_with_distance(self):
-        restaurants = self.available_restaurants()
-
-        if not self.location or self.location.lat is None or self.location.lng is None:
-            return [
-                {'restaurant': r, 'distance_km': None}
-                for r in restaurants
-            ]
-
-        order_point = (self.location.lat, self.location.lng)
-        result = []
-
-        for restaurant in restaurants:
-            loc = getattr(restaurant, 'location', None)
-            if loc and loc.lat is not None and loc.lng is not None:
-                rest_point = (loc.lat, loc.lng)
-                distance_km = geodesic(order_point, rest_point).km
-                result.append({
-                    'restaurant': restaurant,
-                    'distance_km': round(distance_km, 2),
-                })
-
-        result.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
-
-        return result
 
 
 class OrderItem(models.Model):

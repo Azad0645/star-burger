@@ -10,8 +10,10 @@ from django.db.models.functions import Coalesce
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
 from foodcartapp.models import Product, Restaurant, Order
+from geopy.distance import geodesic
+from geo.models import GeocodedAddress
+from geo.utils import fetch_coordinates
 
 
 class Login(forms.Form):
@@ -105,7 +107,7 @@ def view_orders(request):
         output_field=IntegerField(),
     )
 
-    orders = (
+    orders_qs = (
         Order.objects
         .with_total_price()
         .annotate(
@@ -117,8 +119,54 @@ def view_orders(request):
             status_priority=status_order,
         )
         .order_by('status_priority', '-id')
-        .select_related('cooking_restaurant', 'location')
+        .select_related('cooking_restaurant')
         .prefetch_related('items__product')
         .exclude(status='COMPLETED')
+        .with_available_restaurants()
     )
-    return render(request, 'order_items.html', {'order_items': orders})
+
+    orders = list(orders_qs)
+
+    addresses = set()
+    for order in orders:
+        if order.address:
+            addresses.add(order.address)
+        for restaurant in getattr(order, 'available_restaurants', []):
+            if restaurant.address:
+                addresses.add(restaurant.address)
+
+    geos = GeocodedAddress.objects.filter(raw_address__in=addresses)
+    coords_by_address = {
+        g.raw_address: (g.lat, g.lng)
+        for g in geos
+        if g.lat is not None and g.lng is not None
+    }
+
+    missing_addresses = [addr for addr in addresses if addr not in coords_by_address]
+
+    for addr in missing_addresses:
+        geo = fetch_coordinates(addr)
+        if geo and geo.lat is not None and geo.lng is not None:
+            coords_by_address[addr] = (geo.lat, geo.lng)
+
+    for order in orders:
+        order_coords = coords_by_address.get(order.address)
+        enriched = []
+
+        for restaurant in getattr(order, 'available_restaurants', []):
+            rest_coords = coords_by_address.get(restaurant.address)
+            distance_km = None
+            if order_coords and rest_coords:
+                distance_km = round(geodesic(order_coords, rest_coords).km, 2)
+
+            enriched.append({
+                'restaurant': restaurant,
+                'distance_km': distance_km,
+            })
+
+        enriched.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
+        order.available_restaurants_with_distance = enriched
+
+    return render(request, 'order_items.html', {
+        'order_items': orders,
+    })
