@@ -8,11 +8,6 @@ class GeocodedAddress(models.Model):
         unique=True,
         db_index=True,
     )
-    normalized_address = models.CharField(
-        'Нормализованный адрес',
-        max_length=255,
-        blank=True,
-    )
     lat = models.FloatField('Широта', null=True, blank=True)
     lng = models.FloatField('Долгота', null=True, blank=True)
     provider = models.CharField(
@@ -28,4 +23,4 @@ class GeocodedAddress(models.Model):
         verbose_name_plural = 'Геокодированные адреса'
 
     def __str__(self):
-        return self.normalized_address or self.raw_address
+        return self.raw_address

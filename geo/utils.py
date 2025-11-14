@@ -56,7 +56,6 @@ def fetch_coordinates(address: str):
         pos = geo_object["Point"]["pos"]
         lon_str, lat_str = pos.split()
         lat, lon = float(lat_str), float(lon_str)
-        normalized_address = geo_object["metaDataProperty"]["GeocoderMetaData"]["text"]
     except Exception as e:
         print(f"Ошибка разбора ответа Яндекса для '{address}': {e}")
         return cached
@@ -64,7 +63,6 @@ def fetch_coordinates(address: str):
     obj, _ = GeocodedAddress.objects.update_or_create(
         raw_address=address,
         defaults={
-            "normalized_address": normalized_address,
             "lat": lat,
             "lng": lon,
             "provider": "yandex",
