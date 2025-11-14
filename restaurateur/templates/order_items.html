@@ -40,7 +40,9 @@
         <td>{{ item.get_payment_method_display }}</td>
 
         <td>
-          {% if item.cooking_restaurant %}
+          {% if item.address_not_found %}
+            Адрес не найден
+          {% elif item.cooking_restaurant %}
             {{ item.cooking_restaurant.name }}
           {% else %}
             <details>

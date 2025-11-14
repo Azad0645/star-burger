@@ -150,6 +150,16 @@ def view_orders(request):
             coords_by_address[addr] = (geo.lat, geo.lng)
 
     for order in orders:
+        if order.address and order.address not in coords_by_address:
+            order.address_not_found = True
+        else:
+            order.address_not_found = False
+
+    for order in orders:
+        if order.address_not_found:
+            order.available_restaurants_with_distance = []
+            continue
+
         order_coords = coords_by_address.get(order.address)
         enriched = []
 
