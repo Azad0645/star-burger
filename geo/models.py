@@ -6,7 +6,6 @@ class GeocodedAddress(models.Model):
         'Исходный адрес',
         max_length=255,
         unique=True,
-        db_index=True,
     )
     lat = models.FloatField('Широта', null=True, blank=True)
     lng = models.FloatField('Долгота', null=True, blank=True)
