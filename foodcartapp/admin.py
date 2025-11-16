@@ -128,17 +128,15 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'comment']
     inlines = [OrderItemInline]
     ordering = ['-id']
-    fields = ['firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at', 'payment_method', 'cooking_restaurant', 'location']
-    readonly_fields = ['created_at', 'location']
+    fields = ['firstname', 'lastname', 'phonenumber', 'address', 'status', 'comment', 'created_at', 'called_at', 'delivered_at', 'payment_method', 'cooking_restaurant']
+    readonly_fields = ['created_at']
 
     def save_model(self, request, obj, form, change):
         if obj.cooking_restaurant and obj.status == 'NEW':
             obj.status = 'COOKING'
 
         if 'address' in form.changed_data and obj.address:
-            geo = fetch_coordinates(obj.address)
-            if geo:
-                obj.location = geo
+            fetch_coordinates(obj.address)
 
         super().save_model(request, obj, form, change)
 

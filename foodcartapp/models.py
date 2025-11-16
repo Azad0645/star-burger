@@ -3,7 +3,6 @@ from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import Sum, F, DecimalField, Value
 from django.db.models.functions import Coalesce
-from geo.models import GeocodedAddress
 from collections import defaultdict
 
 
@@ -21,14 +20,6 @@ class Restaurant(models.Model):
         'контактный телефон',
         max_length=50,
         blank=True,
-    )
-    location = models.ForeignKey(
-        GeocodedAddress,
-        verbose_name='Координаты',
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='restaurants',
     )
 
     class Meta:
@@ -266,14 +257,6 @@ class Order(models.Model):
     cooking_restaurant = models.ForeignKey(
         Restaurant,
         verbose_name='Ресторан-исполнитель',
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='orders',
-    )
-    location = models.ForeignKey(
-        GeocodedAddress,
-        verbose_name='Координаты доставки',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
