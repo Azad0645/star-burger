@@ -135,11 +135,11 @@ def view_orders(request):
             if restaurant.address:
                 addresses.add(restaurant.address)
 
-    geos = GeocodedAddress.objects.filter(address__in=addresses)
+    geocoded_addresses = GeocodedAddress.objects.filter(address__in=addresses)
     coords_by_address = {
-        g.address: (g.lat, g.lng)
-        for g in geos
-        if g.lat is not None and g.lng is not None
+        geo.address: (geo.lat, geo.lng)
+        for geo in geocoded_addresses
+        if geo.lat is not None and geo.lng is not None
     }
 
     missing_addresses = [addr for addr in addresses if addr not in coords_by_address]
@@ -161,7 +161,7 @@ def view_orders(request):
             continue
 
         order_coords = coords_by_address.get(order.address)
-        enriched = []
+        restaurants_with_distance = []
 
         for restaurant in getattr(order, 'available_restaurants', []):
             rest_coords = coords_by_address.get(restaurant.address)
@@ -169,13 +169,13 @@ def view_orders(request):
             if order_coords and rest_coords:
                 distance_km = round(geodesic(order_coords, rest_coords).km, 2)
 
-            enriched.append({
+            restaurants_with_distance.append({
                 'restaurant': restaurant,
                 'distance_km': distance_km,
             })
 
-        enriched.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
-        order.available_restaurants_with_distance = enriched
+        restaurants_with_distance.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
+        order.available_restaurants_with_distance = restaurants_with_distance
 
     return render(request, 'order_items.html', {
         'order_items': orders,
