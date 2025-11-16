@@ -145,35 +145,35 @@ class OrderQuerySet(models.QuerySet):
         qs = self.prefetch_related('items__product')
         orders = list(qs)
 
-        product_ids = set()
-        for order in orders:
-            product_ids.update(order.items.values_list('product_id', flat=True))
-
-        if not product_ids:
-            for order in orders:
-                order.available_restaurants = []
+        if not orders:
             return qs
 
         menu_items = (
             RestaurantMenuItem.objects
-            .filter(availability=True, product_id__in=product_ids)
+            .filter(availability=True)
             .select_related("restaurant")
         )
 
-        rests_with_products = defaultdict(set)
+        restaurants_products = defaultdict(set)
+        restaurants_by_id = {}
+
         for item in menu_items:
-            rests_with_products[item.restaurant].add(item.product_id)
+            restaurants_products[item.restaurant_id].add(item.product_id)
+            restaurants_by_id[item.restaurant_id] = item.restaurant
 
         for order in orders:
-            order_products = set(order.items.values_list('product_id', flat=True))
+            order_product_ids = {item.product_id for item in order.items.all()}
 
-            available_restaurants = [
-                rest
-                for rest, rest_products in rests_with_products.items()
-                if order_products.issubset(rest_products)
-            ]
+            if not order_product_ids:
+                order.available_restaurants = []
+                continue
 
-            order.available_restaurants = available_restaurants
+            available = []
+            for restaurant_id, product_ids in restaurants_products.items():
+                if order_product_ids.issubset(product_ids):
+                    available.append(restaurants_by_id[restaurant_id])
+
+            order.available_restaurants = available
 
         return qs
 
