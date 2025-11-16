@@ -2,7 +2,7 @@ from django.db import models
 
 
 class GeocodedAddress(models.Model):
-    raw_address = models.CharField(
+    address = models.CharField(
         'Исходный адрес',
         max_length=255,
         unique=True,
@@ -22,4 +22,4 @@ class GeocodedAddress(models.Model):
         verbose_name_plural = 'Геокодированные адреса'
 
     def __str__(self):
-        return self.raw_address
+        return self.address

@@ -19,7 +19,7 @@ def fetch_coordinates(address: str):
         print("Пустой адрес")
         return None
 
-    cached = GeocodedAddress.objects.filter(raw_address=address).first()
+    cached = GeocodedAddress.objects.filter(address=address).first()
     if cached and cached.lat is not None and cached.lng is not None:
         print(f"Из кеша: {address} -> ({cached.lat}, {cached.lng})")
         return cached
@@ -61,7 +61,7 @@ def fetch_coordinates(address: str):
         return cached
 
     obj, _ = GeocodedAddress.objects.update_or_create(
-        raw_address=address,
+        address=address,
         defaults={
             "lat": lat,
             "lng": lon,

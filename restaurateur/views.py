@@ -135,9 +135,9 @@ def view_orders(request):
             if restaurant.address:
                 addresses.add(restaurant.address)
 
-    geos = GeocodedAddress.objects.filter(raw_address__in=addresses)
+    geos = GeocodedAddress.objects.filter(address__in=addresses)
     coords_by_address = {
-        g.raw_address: (g.lat, g.lng)
+        g.address: (g.lat, g.lng)
         for g in geos
         if g.lat is not None and g.lng is not None
     }
