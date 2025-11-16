@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.db import transaction
 from phonenumber_field.serializerfields import PhoneNumberField
 from .models import Order, OrderItem, Product
-from geo.utils import fetch_coordinates
 
 
 class OrderItemCreateSerializer(serializers.Serializer):
@@ -24,11 +23,7 @@ class OrderCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         items_data = validated_data.pop('products')
 
-        geo = fetch_coordinates(validated_data['address'])
-        order = Order.objects.create(
-            **validated_data,
-            location=geo if geo else None,
-        )
+        order = Order.objects.create(**validated_data)
 
         OrderItem.objects.bulk_create([
             OrderItem(
