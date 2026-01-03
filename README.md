@@ -154,6 +154,89 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts)
 - `YANDEX_GEOCODER_API_KEY` — Получите YANDEX_GEOCODER_API_KEY на https://developer.tech.yandex.ru/services/.
 
+## Настройка Rollbar
+
+1. Установите Rollbar:
+```
+pip install rollbar
+```
+2. Добавьте в MIDDLEWARE в settings.py:
+```
+'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
+```
+
+3. Добавьте в settings.py:
+```
+import rollbar
+
+ROLLBAR = {
+    'access_token': os.environ.get('ROLLBAR_ACCESS_TOKEN', ''),
+    'environment': os.environ.get('ROLLBAR_ENVIRONMENT', 'development' if DEBUG else 'production'),
+    'code_version': '1.0',
+    'root': BASE_DIR,
+}
+```
+
+4. Добавить токен в .env
+```ROLLBAR_ACCESS_TOKEN=your_token_here```
+
+## Настройка PostgreSQL
+
+1. Установите PostgreSQL:
+```
+sudo apt install postgresql postgresql-contrib
+```
+
+2. Создайте базу данных и пользователя:
+```
+CREATE DATABASE starburger;
+CREATE USER starburger_user WITH PASSWORD 'пароль_сюда';
+GRANT ALL PRIVILEGES ON DATABASE starburger TO starburger_user;
+\q
+```
+
+3. Установите psycopg2:
+```
+pip install psycopg2-binary
+```
+4. Добавьте в .env:
+```
+DATABASE_URL=postgres://starburger_user:пароль_сюда@localhost:5432/starburger
+```
+5. Выгрузите данные из SQLite:
+```
+python manage.py dumpdata > data.json
+```
+6. Примените миграции и загрузите данные:
+```
+manage.py migrate
+python manage.py loaddata data.json
+```
+7. Удалите SQLite
+```
+rm db.sqlite3
+```
+
+## Быстрое обновление кода на сервере
+
+Подключитесь к серверу:
+
+```
+ssh dvmnbot
+cd /opt/projects/star-burger
+```
+
+Запустите деплой:
+
+```
+./deploy_star_burger.sh
+```
+
+## Star Burger
+
+Прод-версия сайта:
+[https://starburger.store](https://starburger.store)
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
