@@ -234,6 +234,7 @@ cd /opt/projects/star-burger
 
 ## Star Burger
 
+deploy test
 Прод-версия сайта:
 [https://starburger.store](https://starburger.store)
 
