@@ -19,12 +19,16 @@ DEBUG = env.bool('DEBUG', True)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
-ROLLBAR = {
-    'access_token': os.environ.get('ROLLBAR_ACCESS_TOKEN', ''),
-    'environment': os.environ.get('ROLLBAR_ENVIRONMENT', 'development' if DEBUG else 'production'),
-    'code_version': '1.0',
-    'root': BASE_DIR,
-}
+ROLLBAR_ACCESS_TOKEN = os.environ.get('ROLLBAR_ACCESS_TOKEN')
+ROLLBAR_ENVIRONMENT = os.environ.get('ROLLBAR_ENVIRONMENT')
+
+if ROLLBAR_ACCESS_TOKEN:
+    ROLLBAR = {
+        'access_token': ROLLBAR_ACCESS_TOKEN,
+        'environment': ROLLBAR_ENVIRONMENT,
+        'code_version': '1.0',
+        'root': BASE_DIR,
+    }
 
 INSTALLED_APPS = [
     'foodcartapp.apps.FoodcartappConfig',
